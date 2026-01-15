@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_8_cost_by_sku",
+  "tags": [
+    "analytics",
+    "aggregation",
+    "sku"
+  ],
+  "type": "esql",
+  "description": "Analyze total costs grouped by SKU (cloud service type)",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| EVAL cost_converted = total_ecu * conf_ecu_rate\n| STATS total_ecu_sum = SUM(total_ecu), total_cost = SUM(cost_converted), deployment_count = COUNT_DISTINCT(deployment_id) BY sku\n| SORT total_cost DESC\n",
+    "params": {}
+  }
+}

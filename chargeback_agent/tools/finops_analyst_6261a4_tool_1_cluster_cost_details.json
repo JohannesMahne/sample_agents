@@ -1,0 +1,19 @@
+{
+  "id": "finops_analyst_6261a4_tool_1_cluster_cost_details",
+  "tags": [
+    "lookup",
+    "costs",
+    "billing"
+  ],
+  "type": "esql",
+  "description": "Get detailed cost breakdown for a specific cluster by deployment ID",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| WHERE deployment_id == ?deployment_id\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| EVAL cost_converted = total_ecu * conf_ecu_rate\n| KEEP deployment_id, deployment_name, deployment_group, cost_type, sku, total_ecu, cost_converted, @timestamp\n| SORT @timestamp DESC\n| LIMIT 50\n",
+    "params": {
+      "deployment_id": {
+        "type": "keyword",
+        "description": "Deployment ID to look up (e.g., 3cc5a925728f480abee1f5112dd184bf)"
+      }
+    }
+  }
+}

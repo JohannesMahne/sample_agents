@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_11_cost_type_comparison",
+  "tags": [
+    "analytics",
+    "comparison",
+    "cost-type"
+  ],
+  "type": "esql",
+  "description": "Compare costs across different cost types (Enterprise_azure, etc.)",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| EVAL cost_converted = total_ecu * conf_ecu_rate\n| STATS total_cost = SUM(cost_converted), total_ecu_sum = SUM(total_ecu), deployment_count = COUNT_DISTINCT(deployment_id) BY cost_type\n| SORT total_cost DESC\n",
+    "params": {}
+  }
+}

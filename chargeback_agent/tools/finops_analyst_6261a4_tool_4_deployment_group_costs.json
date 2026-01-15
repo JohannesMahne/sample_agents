@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_4_deployment_group_costs",
+  "tags": [
+    "analytics",
+    "aggregation",
+    "groups"
+  ],
+  "type": "esql",
+  "description": "Total costs aggregated by deployment group with currency conversion",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| EVAL cost_converted = total_ecu * conf_ecu_rate\n| STATS total_ecu_sum = SUM(total_ecu), total_cost = SUM(cost_converted), deployment_count = COUNT_DISTINCT(deployment_id) BY deployment_group\n| SORT total_cost DESC\n",
+    "params": {}
+  }
+}

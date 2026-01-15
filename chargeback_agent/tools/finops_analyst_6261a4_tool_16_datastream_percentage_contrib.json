@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_16_datastream_percentage_contrib",
+  "tags": [
+    "analytics",
+    "datastream",
+    "percentage"
+  ],
+  "type": "esql",
+  "description": "Calculate what percentage of total costs each datastream represents",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| LOOKUP JOIN cluster_deployment_contribution_lookup ON composite_key\n| LOOKUP JOIN cluster_datastream_contribution_lookup ON composite_key\n| EVAL indexing = CASE(deployment_sum_indexing_time > 0, TO_DOUBLE(datastream_sum_indexing_time) / deployment_sum_indexing_time * total_ecu, 0),\n        querying = CASE(deployment_sum_query_time > 0, TO_DOUBLE(datastream_sum_query_time) / deployment_sum_query_time * total_ecu, 0),\n        data_set = CASE(deployment_sum_data_set_store_size > 0, TO_DOUBLE(datastream_sum_data_set_store_size) / deployment_sum_data_set_store_size * total_ecu, 0),\n        store = CASE(deployment_sum_store_size > 0, TO_DOUBLE(datastream_sum_store_size) / deployment_sum_store_size * total_ecu, 0)\n| EVAL storage = CASE(store == 0, data_set, store)\n| EVAL blended_cost = ((storage * conf_storage_weight) + (querying * conf_query_weight) + (indexing * conf_indexing_weight)) / (conf_storage_weight + conf_query_weight + conf_indexing_weight) * conf_ecu_rate\n| STATS datastream_cost = SUM(blended_cost) BY datastream, deployment_name\n| STATS \n    total_by_datastream = SUM(datastream_cost),\n    deployments = VALUES(deployment_name)\n  BY datastream\n| EVAL deployment_list = TO_STRING(deployments)\n| DROP deployments\n| SORT total_by_datastream DESC\n| LIMIT 30\n",
+    "params": {}
+  }
+}

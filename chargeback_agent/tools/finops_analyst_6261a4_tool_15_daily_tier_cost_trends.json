@@ -1,0 +1,15 @@
+{
+  "id": "finops_analyst_6261a4_tool_15_daily_tier_cost_trends",
+  "tags": [
+    "analytics",
+    "trends",
+    "time-series",
+    "tier"
+  ],
+  "type": "esql",
+  "description": "Track daily cost trends broken down by tier for time-series visualization",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| LOOKUP JOIN cluster_deployment_contribution_lookup ON composite_key\n| LOOKUP JOIN cluster_tier_contribution_lookup ON composite_key\n| EVAL day = DATE_TRUNC(1 day, @timestamp),\n        indexing = CASE(deployment_sum_indexing_time > 0, TO_DOUBLE(tier_sum_indexing_time) / deployment_sum_indexing_time * total_ecu, 0),\n        querying = CASE(deployment_sum_query_time > 0, TO_DOUBLE(tier_sum_query_time) / deployment_sum_query_time * total_ecu, 0),\n        data_set = CASE(deployment_sum_data_set_store_size > 0, TO_DOUBLE(tier_sum_data_set_store_size) / deployment_sum_data_set_store_size * total_ecu, 0),\n        store = CASE(deployment_sum_store_size > 0, TO_DOUBLE(tier_sum_store_size) / deployment_sum_store_size * total_ecu, 0)\n| EVAL storage = CASE(store == 0, data_set, store)\n| EVAL total_weight_hot = conf_storage_weight + conf_query_weight + conf_indexing_weight,\n        total_weight_cold = conf_storage_weight + conf_query_weight\n| EVAL blended = CASE(tier == \"hot/content\", ((storage * conf_storage_weight) + (querying * conf_query_weight) + (indexing * conf_indexing_weight)) / total_weight_hot, ((storage * conf_storage_weight) + (querying * conf_query_weight)) / total_weight_cold) * conf_ecu_rate\n| STATS daily_tier_cost = SUM(blended) BY day, tier\n| SORT day ASC, tier ASC\n",
+    "params": {}
+  }
+}

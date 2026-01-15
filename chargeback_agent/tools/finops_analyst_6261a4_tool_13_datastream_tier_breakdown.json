@@ -1,0 +1,19 @@
+{
+  "id": "finops_analyst_6261a4_tool_13_datastream_tier_breakdown",
+  "tags": [
+    "analytics",
+    "datastream",
+    "tier"
+  ],
+  "type": "esql",
+  "description": "Analyze storage and activity breakdown by datastream and tier",
+  "configuration": {
+    "query": "FROM cluster_tier_and_datastream_contribution_lookup\n| WHERE cluster_name == ?cluster_name\n| EVAL storage_gb = tier_and_datastream_sum_store_size / 1073741824,\n        data_set_gb = tier_and_datastream_sum_data_set_store_size / 1073741824\n| STATS total_storage_gb = SUM(storage_gb), total_data_set_gb = SUM(data_set_gb), total_query_time = SUM(tier_and_datastream_sum_query_time), total_indexing_time = SUM(tier_and_datastream_sum_indexing_time) BY datastream, tier\n| WHERE total_storage_gb > 0 OR total_data_set_gb > 0\n| SORT total_storage_gb DESC\n| LIMIT 50\n",
+    "params": {
+      "cluster_name": {
+        "type": "keyword",
+        "description": "Cluster name (deployment ID)"
+      }
+    }
+  }
+}

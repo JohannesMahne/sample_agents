@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_12_chargeback_config_lookup",
+  "tags": [
+    "lookup",
+    "configuration",
+    "chargeback"
+  ],
+  "type": "esql",
+  "description": "Retrieve current chargeback configuration including rates and weights",
+  "configuration": {
+    "query": "FROM chargeback_conf_lookup\n| KEEP config_join_key, conf_ecu_rate, conf_ecu_rate_unit, conf_indexing_weight, conf_query_weight, conf_storage_weight, conf_start_date, conf_end_date\n| LIMIT 1\n",
+    "params": {}
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_14_tier_cost_breakdown_by_type",
+  "tags": [
+    "analytics",
+    "tier",
+    "cost-components"
+  ],
+  "type": "esql",
+  "description": "Break down costs by tier showing separate indexing, querying, and storage costs",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| LOOKUP JOIN cluster_deployment_contribution_lookup ON composite_key\n| LOOKUP JOIN cluster_tier_contribution_lookup ON composite_key\n| EVAL indexing_cost = CASE(deployment_sum_indexing_time > 0, TO_DOUBLE(tier_sum_indexing_time) / deployment_sum_indexing_time * total_ecu * conf_ecu_rate, 0),\n        querying_cost = CASE(deployment_sum_query_time > 0, TO_DOUBLE(tier_sum_query_time) / deployment_sum_query_time * total_ecu * conf_ecu_rate, 0),\n        data_set = CASE(deployment_sum_data_set_store_size > 0, TO_DOUBLE(tier_sum_data_set_store_size) / deployment_sum_data_set_store_size * total_ecu, 0),\n        store = CASE(deployment_sum_store_size > 0, TO_DOUBLE(tier_sum_store_size) / deployment_sum_store_size * total_ecu, 0)\n| EVAL storage = CASE(store == 0, data_set, store)\n| EVAL storage_cost = storage * conf_ecu_rate,\n        deployment = CONCAT(deployment_name, \" (\", LEFT(deployment_id, 6), \")\")\n| STATS \n    total_indexing = SUM(indexing_cost),\n    total_querying = SUM(querying_cost),\n    total_storage = SUM(storage_cost)\n  BY tier, deployment\n| WHERE total_indexing > 0 OR total_querying > 0 OR total_storage > 0\n| SORT total_storage DESC\n| LIMIT 30\n",
+    "params": {}
+  }
+}

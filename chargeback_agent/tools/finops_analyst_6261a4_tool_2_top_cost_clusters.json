@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_2_top_cost_clusters",
+  "tags": [
+    "analytics",
+    "costs",
+    "ranking"
+  ],
+  "type": "esql",
+  "description": "Identify top 20 clusters by total ECU consumption with cost conversion",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| EVAL cost_converted = total_ecu * conf_ecu_rate\n| STATS total_ecu_sum = SUM(total_ecu), total_cost = SUM(cost_converted) BY deployment_id, deployment_name, deployment_group\n| SORT total_cost DESC\n| LIMIT 20\n",
+    "params": {}
+  }
+}

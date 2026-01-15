@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_10_tier_efficiency_analysis",
+  "tags": [
+    "analytics",
+    "efficiency",
+    "tier"
+  ],
+  "type": "esql",
+  "description": "Analyze cost efficiency across hot/content and frozen tiers",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| LOOKUP JOIN cluster_deployment_contribution_lookup ON composite_key\n| LOOKUP JOIN cluster_tier_contribution_lookup ON composite_key\n| EVAL cost_per_gb = TO_DOUBLE(total_ecu * conf_ecu_rate) / (tier_sum_store_size / 1073741824),\n        deployment = CONCAT(deployment_name, \" (\", LEFT(deployment_id, 6), \")\")\n| WHERE tier_sum_store_size > 0\n| STATS avg_cost_per_gb = AVG(cost_per_gb), total_storage_gb = SUM(tier_sum_store_size) / 1073741824 BY tier, deployment\n| SORT avg_cost_per_gb DESC\n| LIMIT 30\n",
+    "params": {}
+  }
+}

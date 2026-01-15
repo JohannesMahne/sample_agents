@@ -1,0 +1,19 @@
+{
+  "id": "finops_analyst_6261a4_tool_3_cost_trends_by_deployment",
+  "tags": [
+    "analytics",
+    "trends",
+    "time-series"
+  ],
+  "type": "esql",
+  "description": "Analyze daily cost trends for a specific deployment over time",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| WHERE deployment_id == ?deployment_id\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| EVAL day = DATE_TRUNC(1 day, @timestamp), cost_converted = total_ecu * conf_ecu_rate\n| STATS daily_ecu = SUM(total_ecu), daily_cost = SUM(cost_converted) BY day, deployment_name\n| SORT day ASC\n",
+    "params": {
+      "deployment_id": {
+        "type": "keyword",
+        "description": "Deployment ID to analyze"
+      }
+    }
+  }
+}

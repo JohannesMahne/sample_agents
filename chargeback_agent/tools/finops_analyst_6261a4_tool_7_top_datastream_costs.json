@@ -1,0 +1,14 @@
+{
+  "id": "finops_analyst_6261a4_tool_7_top_datastream_costs",
+  "tags": [
+    "analytics",
+    "ranking",
+    "datastream"
+  ],
+  "type": "esql",
+  "description": "Identify top 30 most expensive datastreams across all deployments",
+  "configuration": {
+    "query": "FROM billing_cluster_cost_lookup\n| LOOKUP JOIN chargeback_conf_lookup ON @timestamp >= conf_start_date AND @timestamp <= conf_end_date\n| LOOKUP JOIN cluster_deployment_contribution_lookup ON composite_key\n| LOOKUP JOIN cluster_datastream_contribution_lookup ON composite_key\n| EVAL indexing = CASE(deployment_sum_indexing_time > 0, TO_DOUBLE(datastream_sum_indexing_time) / deployment_sum_indexing_time * total_ecu, 0),\n        querying = CASE(deployment_sum_query_time > 0, TO_DOUBLE(datastream_sum_query_time) / deployment_sum_query_time * total_ecu, 0),\n        data_set = CASE(deployment_sum_data_set_store_size > 0, TO_DOUBLE(datastream_sum_data_set_store_size) / deployment_sum_data_set_store_size * total_ecu, 0),\n        store = CASE(deployment_sum_store_size > 0, TO_DOUBLE(datastream_sum_store_size) / deployment_sum_store_size * total_ecu, 0)\n| EVAL storage = CASE(store == 0, data_set, store)\n| EVAL blended_cost = ((storage * conf_storage_weight) + (querying * conf_query_weight) + (indexing * conf_indexing_weight)) / (conf_storage_weight + conf_query_weight + conf_indexing_weight) * conf_ecu_rate\n| STATS total_cost = SUM(blended_cost), avg_storage = AVG(datastream_sum_store_size) BY datastream\n| SORT total_cost DESC\n| LIMIT 30\n",
+    "params": {}
+  }
+}
