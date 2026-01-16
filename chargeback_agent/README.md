@@ -303,7 +303,7 @@ All division operations use `TO_DOUBLE()` to ensure visualization compatibility 
 
 ### System Requirements
 - **Chargeback Integration**: Version 0.2.8 or higher
-- **ESS Billing Integration**: Version 1.6.1 or higher
+- **ESS Billing Integration**: Version 1.7.0 or higher
 - **Kibana**: Instance with AI Assistant and Agent Builder enabled
 
 ## Deployment
